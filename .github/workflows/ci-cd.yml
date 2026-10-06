@@ -85,10 +85,23 @@ jobs:
             curl -X POST "$RENDER_DEPLOY_HOOK"
             echo "Render backend deployment triggered successfully."
           else
-            echo "Render deployment hook URL secret not provided. Skipping."
+            echo "Render deployment hook URL secret not provided. Skipping Render deployment."
+          fi
+
+      - name: Check Vercel Token Secret
+        id: check_vercel
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          if [ -n "$VERCEL_TOKEN" ]; then
+            echo "has_token=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_token=false" >> $GITHUB_OUTPUT
+            echo "Vercel deployment token secret (VERCEL_TOKEN) not set in repository secrets. Skipping Vercel deployment step."
           fi
 
       - name: Deploy Frontend to Vercel
+        if: steps.check_vercel.outputs.has_token == 'true'
         uses: amondnet/vercel-action@v25
         with:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
